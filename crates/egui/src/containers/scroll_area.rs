@@ -342,7 +342,7 @@ pub struct ScrollArea {
     auto_shrink: Vec2b,
     max_size: Vec2,
     min_scrolled_size: Vec2,
-    scroll_bar_visibility: ScrollBarVisibility,
+    scroll_bar_visibilities: [ScrollBarVisibility; 2],
     scroll_bar_rect: Option<Rect>,
     id_salt: Option<IdSalt>,
     offset_x: Option<f32>,
@@ -397,7 +397,7 @@ impl ScrollArea {
             auto_shrink: Vec2b::TRUE,
             max_size: Vec2::INFINITY,
             min_scrolled_size: Vec2::splat(64.0),
-            scroll_bar_visibility: Default::default(),
+            scroll_bar_visibilities: Default::default(),
             scroll_bar_rect: None,
             id_salt: None,
             offset_x: None,
@@ -463,7 +463,19 @@ impl ScrollArea {
     /// With `ScrollBarVisibility::VisibleWhenNeeded` (default), the scroll bar will be visible only when needed.
     #[inline]
     pub fn scroll_bar_visibility(mut self, scroll_bar_visibility: ScrollBarVisibility) -> Self {
-        self.scroll_bar_visibility = scroll_bar_visibility;
+        self.scroll_bar_visibilities = [scroll_bar_visibility, scroll_bar_visibility];
+        self
+    }
+
+    #[inline]
+    pub fn horizontal_scroll_bar_visibility(mut self, scroll_bar_visibility: ScrollBarVisibility) -> Self {
+        self.scroll_bar_visibilities[0] = scroll_bar_visibility;
+        self
+    }
+
+    #[inline]
+    pub fn vertical_scroll_bar_visibility(mut self, scroll_bar_visibility: ScrollBarVisibility) -> Self {
+        self.scroll_bar_visibilities[1] = scroll_bar_visibility;
         self
     }
 
@@ -681,7 +693,7 @@ struct Prepared {
     /// and vice versa.
     current_bar_use: Vec2,
 
-    scroll_bar_visibility: ScrollBarVisibility,
+    scroll_bar_visibilities: [ScrollBarVisibility; 2],
     scroll_bar_rect: Option<Rect>,
 
     /// Where on the screen the content is (excludes scroll bars; includes `content_margin`).
@@ -714,7 +726,7 @@ impl ScrollArea {
             auto_shrink,
             max_size,
             min_scrolled_size,
-            scroll_bar_visibility,
+            scroll_bar_visibilities,
             scroll_bar_rect,
             id_salt,
             offset_x,
@@ -742,11 +754,14 @@ impl ScrollArea {
         state.offset.x = offset_x.unwrap_or(state.offset.x);
         state.offset.y = offset_y.unwrap_or(state.offset.y);
 
-        let show_bars: Vec2b = match scroll_bar_visibility {
-            ScrollBarVisibility::AlwaysHidden => Vec2b::FALSE,
-            ScrollBarVisibility::VisibleWhenNeeded => state.show_scroll,
-            ScrollBarVisibility::AlwaysVisible => direction_enabled,
-        };
+        let mut show_bars = Vec2b::default();
+        for (d, scroll_bar_visibility) in scroll_bar_visibilities.iter().enumerate() {
+            show_bars[d] = match scroll_bar_visibility {
+                ScrollBarVisibility::AlwaysHidden => false,
+                ScrollBarVisibility::VisibleWhenNeeded => state.show_scroll[d],
+                ScrollBarVisibility::AlwaysVisible => direction_enabled[d]
+            }
+        }
 
         let show_bars_factor = Vec2::new(
             ctx.animate_bool_responsive(id.with("h"), show_bars[0]),
@@ -940,7 +955,7 @@ impl ScrollArea {
             direction_enabled,
             show_bars_factor,
             current_bar_use,
-            scroll_bar_visibility,
+            scroll_bar_visibilities,
             scroll_bar_rect,
             inner_rect,
             content_ui,
@@ -1068,7 +1083,7 @@ impl Prepared {
             direction_enabled,
             mut show_bars_factor,
             current_bar_use,
-            scroll_bar_visibility,
+            scroll_bar_visibilities,
             scroll_bar_rect,
             content_ui,
             viewport: _,
@@ -1251,11 +1266,14 @@ impl Prepared {
             }
         }
 
-        let show_scroll_this_frame = match scroll_bar_visibility {
-            ScrollBarVisibility::AlwaysHidden => Vec2b::FALSE,
-            ScrollBarVisibility::VisibleWhenNeeded => content_is_too_large,
-            ScrollBarVisibility::AlwaysVisible => direction_enabled,
-        };
+        let mut show_scroll_this_frame = Vec2b::default();
+        for (d, scroll_bar_visibility) in scroll_bar_visibilities.iter().enumerate() {
+            show_scroll_this_frame[d] = match scroll_bar_visibility {
+                ScrollBarVisibility::AlwaysHidden => false,
+                ScrollBarVisibility::VisibleWhenNeeded => content_is_too_large[d],
+                ScrollBarVisibility::AlwaysVisible => direction_enabled[d]
+            }
+        }
 
         // Avoid frame delay; start showing scroll bar right away:
         if show_scroll_this_frame[0] && show_bars_factor.x <= 0.0 {
