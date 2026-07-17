@@ -8,8 +8,8 @@ use emath::GuiRounding as _;
 use epaint::{Color32, Direction, Margin, Shape};
 
 use crate::{
-    AsIdSalt, Context, CursorIcon, Id, IdSalt, NumExt as _, Pos2, Rangef, Rect, Response, Sense,
-    Ui, UiBuilder, UiKind, UiStackInfo, Vec2, Vec2b, WidgetInfo, emath, epaint, lerp, pass_state,
+    AsIdSalt, Context, CursorIcon, Id, IdSalt, NumExt as _, PointerButton, Pos2, Rangef, Rect, Response,
+    Sense, Ui, UiBuilder, UiKind, UiStackInfo, Vec2, Vec2b, WidgetInfo, emath, epaint, lerp, pass_state,
     pos2, remap, remap_clamp,
 };
 
@@ -350,6 +350,7 @@ pub struct ScrollArea {
     on_hover_cursor: Option<CursorIcon>,
     on_drag_cursor: Option<CursorIcon>,
     scroll_source: ScrollSource,
+    drag_by: Option<PointerButton>,
     stop_kinesis: bool,
     wheel_scroll_multiplier: Vec2,
 
@@ -406,6 +407,7 @@ impl ScrollArea {
             on_hover_cursor: None,
             on_drag_cursor: None,
             scroll_source: ScrollSource::default(),
+            drag_by: Default::default(),
             stop_kinesis: Default::default(),
             wheel_scroll_multiplier: Vec2::splat(1.0),
             content_margin: None,
@@ -599,6 +601,12 @@ impl ScrollArea {
     }
 
     #[inline]
+    pub fn drag_by(mut self, drag_by: PointerButton) -> Self {
+        self.drag_by = Some(drag_by);
+        self
+    }
+
+    #[inline]
     pub fn stop_kinesis(mut self, stop_kinesis: bool) -> Self {
         self.stop_kinesis = stop_kinesis;
         self
@@ -742,6 +750,7 @@ impl ScrollArea {
             on_hover_cursor,
             on_drag_cursor,
             scroll_source,
+            drag_by,
             stop_kinesis,
             wheel_scroll_multiplier,
             content_margin: _, // Used elsewhere
@@ -870,7 +879,7 @@ impl ScrollArea {
 
             if content_response_option
                 .as_ref()
-                .is_some_and(|response| response.dragged())
+                .is_some_and(|response| drag_by.map_or_else(|| response.dragged(), |button| response.dragged_by(button)))
             {
                 for d in 0..2 {
                     if direction_enabled[d] {
@@ -885,7 +894,7 @@ impl ScrollArea {
                 // Apply the cursor velocity to the scroll area when the user releases the drag.
                 if content_response_option
                     .as_ref()
-                    .is_some_and(|response| response.drag_stopped())
+                    .is_some_and(|response| drag_by.map_or_else(|| response.drag_stopped(), |button| response.drag_stopped_by(button)))
                 {
                     state.vel =
                         direction_enabled.to_vec2() * ui.input(|input| input.pointer.velocity());
