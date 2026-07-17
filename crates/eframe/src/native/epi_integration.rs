@@ -154,7 +154,7 @@ pub struct EpiIntegration {
     pub frame: epi::Frame,
     last_auto_save: Instant,
     pub beginning: Instant,
-    is_first_frame: bool,
+    frame_i: usize,
     pub egui_ctx: egui::Context,
     pending_full_output: egui::FullOutput,
 
@@ -224,7 +224,7 @@ impl EpiIntegration {
             beginning: Instant::now()
                 .checked_sub(web_time::Duration::from_secs_f64(egui_ctx.time()))
                 .unwrap_or_else(Instant::now),
-            is_first_frame: true,
+            frame_i: 0,
             egui_ctx,
         }
     }
@@ -321,10 +321,12 @@ impl EpiIntegration {
 
     pub fn post_rendering(&mut self, window: &winit::window::Window) {
         profiling::function_scope!();
-        if std::mem::take(&mut self.is_first_frame) {
+        if self.frame_i == 1 {
             // We keep hidden until we've painted something. See https://github.com/emilk/egui/pull/2279
             window.set_visible(true);
         }
+
+        self.frame_i += 1;
     }
 
     // ------------------------------------------------------------------------
