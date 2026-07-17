@@ -350,6 +350,7 @@ pub struct ScrollArea {
     on_hover_cursor: Option<CursorIcon>,
     on_drag_cursor: Option<CursorIcon>,
     scroll_source: ScrollSource,
+    stop_kinesis: bool,
     wheel_scroll_multiplier: Vec2,
 
     content_margin: Option<Margin>,
@@ -405,6 +406,7 @@ impl ScrollArea {
             on_hover_cursor: None,
             on_drag_cursor: None,
             scroll_source: ScrollSource::default(),
+            stop_kinesis: Default::default(),
             wheel_scroll_multiplier: Vec2::splat(1.0),
             content_margin: None,
             stick_to_end: Vec2b::FALSE,
@@ -596,6 +598,12 @@ impl ScrollArea {
         self
     }
 
+    #[inline]
+    pub fn stop_kinesis(mut self, stop_kinesis: bool) -> Self {
+        self.stop_kinesis = stop_kinesis;
+        self
+    }
+
     /// The scroll amount caused by a mouse wheel scroll is multiplied by this amount.
     ///
     /// Independent for each scroll direction. Defaults to `Vec2{x: 1.0, y: 1.0}`.
@@ -734,6 +742,7 @@ impl ScrollArea {
             on_hover_cursor,
             on_drag_cursor,
             scroll_source,
+            stop_kinesis,
             wheel_scroll_multiplier,
             content_margin: _, // Used elsewhere
             stick_to_end,
@@ -854,6 +863,10 @@ impl ScrollArea {
             let content_response_option = state
                 .interact_rect
                 .map(|rect| ui.interact(rect, id.with("area"), Sense::DRAG));
+
+            if stop_kinesis {
+                state.vel = [0.0, 0.0].into();
+            }
 
             if content_response_option
                 .as_ref()
