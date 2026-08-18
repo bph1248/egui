@@ -1102,6 +1102,8 @@ pub enum ViewportCommand {
     /// immediately before this function is called.
     StartDrag,
 
+    Center,
+
     /// Set the outer position of the viewport, i.e. moves the window.
     OuterPosition(Pos2),
 

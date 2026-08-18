@@ -1776,6 +1776,19 @@ fn process_viewport_command(
         }
         ViewportCommand::Transparent(v) => window.set_transparent(v),
         ViewportCommand::Visible(v) => window.set_visible(v),
+        ViewportCommand::Center => {
+            if let Some(screen_extent) = info.monitor_size {
+                let window_outer_extent = window.outer_size();
+
+                let x = (screen_extent.x - window_outer_extent.width as f32) / 2.;
+                let y = (screen_extent.y - window_outer_extent.height as f32) / 2.;
+
+                window.set_outer_position(winit::dpi::PhysicalPosition::new(
+                    pixels_per_point * x,
+                    pixels_per_point * y
+                ));
+            }
+        }
         ViewportCommand::OuterPosition(pos) => {
             window.set_outer_position(PhysicalPosition::new(
                 pixels_per_point * pos.x,
