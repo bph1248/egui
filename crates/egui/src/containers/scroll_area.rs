@@ -861,6 +861,10 @@ impl ScrollArea {
         let viewport = Rect::from_min_size(Pos2::ZERO + state.offset, inner_size);
         let dt = ui.input(|i| i.stable_dt).at_most(0.1);
 
+        if stop_kinesis {
+            state.vel = [0.0, 0.0].into();
+        }
+
         let background_drag_response = if scroll_source.drag.enabled(ui.ctx())
             && ui.is_enabled()
             && state.content_is_too_large.any()
@@ -871,10 +875,6 @@ impl ScrollArea {
             let content_response_option = state
                 .interact_rect
                 .map(|rect| ui.interact(rect, id.with("area"), Sense::DRAG));
-
-            if stop_kinesis {
-                state.vel = [0.0, 0.0].into();
-            }
 
             if content_response_option
                 .as_ref()
