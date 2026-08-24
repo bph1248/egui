@@ -1151,6 +1151,8 @@ pub enum ViewportCommand {
     /// with the title bar, close buttons, resize handles, etc.
     Decorations(bool),
 
+    DecorationsEx { enable: bool, center_window: bool },
+
     /// Set window to be always-on-top, always-on-bottom, or neither.
     WindowLevel(WindowLevel),
 

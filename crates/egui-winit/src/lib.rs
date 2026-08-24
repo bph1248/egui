@@ -1883,6 +1883,9 @@ fn process_viewport_command(
                 window.set_undecorated_shadow(!v);
             }
         }
+        ViewportCommand::DecorationsEx { enable, center_window } => {
+            window.set_decorations_ex(enable, center_window);
+        }
         ViewportCommand::WindowLevel(l) => window.set_window_level(match l {
             egui::viewport::WindowLevel::AlwaysOnBottom => WindowLevel::AlwaysOnBottom,
             egui::viewport::WindowLevel::AlwaysOnTop => WindowLevel::AlwaysOnTop,

@@ -161,6 +161,10 @@ wgpu = { version = "30.0", default-features = false, features = ["std"] }
 windows-sys = "0.61.2"
 winit = { version = "0.30.13", default-features = false }
 
+[patch.crates-io]
+winit = { git = "https://github.com/bph1248/winit.git", branch = "mod" }
+# winit = { path = "../winit" }
+
 [workspace.lints.rust]
 unsafe_code = "deny"
 
